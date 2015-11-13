@@ -1,8 +1,12 @@
 machine:
     python:
         version:
-            3.5.0
             2.7.10
+test:
+  override:
+      - tox
+      - pyenv global 3.5.0
+      - tox
 test:
     override:
         - tox

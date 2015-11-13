@@ -113,17 +113,39 @@ def ssh_connection(wrapped_function):
     return _wrapped
 
 
+def environment_builder(wrapped_function):
+    def _wrapped(*args, **kwargs):
+        if 'quiet' in kwargs:
+            env.quiet = kwargs.pop('quiet')
+        if 'warn_only' in kwargs:
+            env.warn_only = kwargs.pop('warn_only')
+        if 'pty' in kwargs:
+            env.pty = kwargs.pop('pty')
+        return wrapped_function(*args, **kwargs)
+    return _wrapped
+
+
+@contextmanager
+@environment_builder
+def settings(**kwargs):
+    yield
+
+
 @contextmanager
 def cd(path):
     # Yes, I know it's simplistic.  But if it's stupid and it works, then it
     # ain't stupid.
-    env.working_directory.append(path)
-    yield
-    env.working_directory.pop()
+    try:
+        env.working_directory.append(path)
+        yield
+        env.working_directory.pop()
+    except TypeError:
+        raise TypeError("In order to use the CD context manager, you must specify a path string")
 
 
 # The meat and potatoes of the entire system.
-def run(command):
+def run(command, **kwargs):
+    @environment_builder
     @ssh_connection
     def run_command(*args, **kwargs):
         command = kwargs['command']
@@ -149,7 +171,7 @@ def run(command):
             sys.exit(1)
 
         return False
-    return run_command(command=command)
+    return run_command(command=command, **kwargs)
 
 
 # Putting a file is handy.  I may decide to check and see if there is already

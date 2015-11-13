@@ -4,4 +4,4 @@ machine:
             3.5.0
 test:
     override:
-        - nosetests -vv yarn/tests
+        - tox

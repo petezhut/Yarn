@@ -12,6 +12,7 @@ setup(
     author='Jason L McFarland',
     author_email='jason.mcfarland1976+python-yarn@gmail.com',
     packages=['yarn',],
+    zip_safe=False,
 #    test_suite='nose.collector',
 #    tests_require=['nose', 'paramiko'],
     install_requires=['paramiko>=1.13'],

@@ -12,7 +12,7 @@ class Environment(object):
     run_parallel = True
 
     # The host to which we are connecting to execute tasks
-    host_string = ""
+    host_string = None
 
     # The port to use for the connection.
     _port = 22

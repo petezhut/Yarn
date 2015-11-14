@@ -12,63 +12,57 @@ from getpass import getpass
 from contextlib import contextmanager
 from paramiko.ssh_exception import AuthenticationException
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
+logger = logging.getLogger("Yarn")
+logger.setLevel(logging.DEBUG)
 # I really, really wish I could change the format of this to have my
 # connection_string in it, but I am unwilling to break the logger to do it.
-logging.basicConfig(format='[%(asctime)s] %(levelname)s - %(funcName)s: %(message)s')
+# logging.basicConfig(format='[%(asctime)s] %(levelname)s - %(funcName)s: %(message)s')
 
 
 # Here is the global environment for the system.  Pretty much everyone will
 # use this.
 env = Environment()
+env.quiet=False
 
-# Starting the work for local execution per GitHub Issue #20
-def local(command):
-    proc = subprocess.Popen(command, shell=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = proc.communicate()
-    stdout = [a.decode('utf-8').strip() for a in stdout.splitlines()]
-    stderr = ["ERROR: [LOCAL] '{}'".format(a.decode('utf-8').strip()) for a in stderr.splitlines()]
+class ConnectionStringFilter(logging.Filter):
+    def filter(self, record):
+        record.connection_string = env.connection_string
+        return True
+
+
+logging.basicConfig(format='[%(connection_string)s] %(levelname)s: %(message)s')
+logger.addFilter(ConnectionStringFilter())
+
+def handle_output(stdout, stderr):
+    stdout = [a.decode('utf-8').strip() for a in stdout.read().splitlines() if a]
+    stderr = [a.decode('utf-8').strip() for a in stderr.read().splitlines() if a]
+    print(stdout)
+    print(stderr)
+    print(bool(stdout))
+    print(bool(stderr))
     if not stderr:
-        if not env.quiet:
-            for a in stdout:
-                logging.info("[LOCAL] - {}".format(a))
-        ret = "\n".join(stdout)
-        return ret
+        for a in stdout:
+            logging.info(a)
+        return "\n".join(stdout)
     if not env.quiet:
         logging.warning("\n".join(stderr))
         logging.warning("ENV_DEBUG: '{}'".format(local("env")))
     if not env.warn_only:
         sys.exit(1)
 
+# Starting the work for local execution per GitHub Issue #20
+def local(command):
+    proc = subprocess.Popen(command, shell=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    handle_output(stdout, stderr)
+
 # Starting the work for sudo per GitHub Issue #20
 def sudo(command):
     if not env.password:
         env.password = getpass("Password for {}: ".format(env.connection_string))
-
-    @ssh_connection
-    def sudo_command(*args, **kwargs):
-        conn = kwargs['conn']
-        stdin, stdout, stderr = conn.exec_command(kwargs['command'], get_pty=True)
-        output_buffer = ""
-        while not '[sudo]' in output_buffer:
-            output_buffer += stdout.channel.recv(2048).decode('utf-8')
-        stdin.write('{}\n'.format(env.password))
-        stdin.flush()
-        stdout = [a.decode('utf-8').rstrip() for a in stdout.read().splitlines() if a]
-        stderr = ["ERROR: [{}] '{}'".format(env.connection_string, a.decode('utf-8').rstrip()) for a in stderr.read().splitlines()]
-        if not stderr:
-            if not env.quiet:
-                for a in stdout:
-                    logging.info("[{}] - {}".format(env.connection_string, a))
-            return "\n".join(stdout)
-        if not env.quiet:
-            logging.warning("\n".join(stderr))
-            logging.warning("ENV_DEBUG: '{}'".format(run("env")))
-        if not env.warn_only:
-            sys.exit(1)
-    return sudo_command(command='sudo -Si {}'.format(command))
+    return run(command='sudo -Si {}'.format(command))
 
 # The joys of running in parallel
 def parallel(wrapped_function):
@@ -84,7 +78,7 @@ def parallel(wrapped_function):
 
 # This might be somewhat important.
 def ssh_connection(wrapped_function):
-    logging.info("Creating SSH connection to: {}".format(env.connection_string))
+    logger.debug("Creating SSH connection")
 
     def _wrapped(*args, **kwargs):
         ssh = paramiko.SSHClient()
@@ -107,7 +101,7 @@ def ssh_connection(wrapped_function):
             return wrapped_function(*args, conn=ssh, **kwargs)
         finally:
             # Gotta love the cleanup associated with the finally call in Python.
-            logging.info("Closing connection: {}".format(env.connection_string))
+            logger.debug("Closing connection")
             ssh.close()
 
     return _wrapped
@@ -151,26 +145,19 @@ def run(command, **kwargs):
         command = kwargs['command']
         if env.working_directory:
             command = "cd {} && {}".format(" && cd ".join(env.working_directory), command)
-        ssh = kwargs.pop('conn')
+        conn = kwargs['conn']
         if not env.quiet:
-            logger.debug("'{}' on '{}'".format(command, env.connection_string))
-        stdin, stdout, stderr = ssh.exec_command(command)
-        # I will defeat the horrible setup for logging I have implemented.
-        # Give me time.
-        stdout = [a.decode('utf-8').strip() for a in stdout.read().splitlines()]
-        stderr = ["ERROR: [{}] '{}'".format(env.connection_string, a.decode('utf-8').strip()) for a in stderr.read().splitlines()]
-        if not stderr:
-            if not env.quiet:
-                for a in stdout:
-                    logging.info("[{}] - {}".format(env.connection_string, a))
-            return "\n".join(stdout)
-        if not env.quiet:
-            logging.warning("\n".join(stderr))
-            logging.warning("ENV_DEBUG: '{}'".format(run("env")))
-        if not env.warn_only:
-            sys.exit(1)
-
-        return False
+            logger.debug("'{}'".format(command))
+        if "sudo" in command:
+            stdin, stdout, stderr = conn.exec_command(command, get_pty=True, timeout=30)
+            output_buffer = ""
+            while not '[sudo]' in output_buffer:
+                output_buffer += stdout.channel.recv(2048).decode('utf-8')
+            stdin.write('{}\n'.format(env.password))
+            stdin.flush()
+        else:
+            stdin, stdout, stderr = conn.exec_command(command, timeout=30)
+        return handle_output(stdout, stderr)
     return run_command(command=command, **kwargs)
 
 

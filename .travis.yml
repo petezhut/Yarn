@@ -13,7 +13,7 @@ env:
         - USE_NETWORK=true
 before_install:
     - docker pull treasureboat/ssh
-    - docker run -p 2222:22 -d treasureboat/ssh 
+    - docker run --net=host -p 2222:22 -d treasureboat/ssh
     - docker inspect treasureboat/ssh 
     - docker ps
     - env

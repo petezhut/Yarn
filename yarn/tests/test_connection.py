@@ -5,7 +5,7 @@ import getpass
 import unittest
 from yarn.api import env, run
 
-env.host_string = "127.0.0.1"
+env.host_string = os.environ["IP_ADDR"]
 env.host_port = 2222
 env.password = "123456"
 

@@ -11,7 +11,7 @@ python:
 env:
     global:
         - USE_NETWORK=true
-        - IP_ADDR="$(ifconfig eth0 | grep "inet addr" | cut -d":" -f2 | awk '{print $1}')"
+        - IP_ADDR="$(ifconfig eth0 | grep \"inet addr\" | cut -d\":\" -f2 | awk '{print $1}')"
 before_install:
     - docker pull treasureboat/ssh
     - docker run -p 2222:22 -d treasureboat/ssh 

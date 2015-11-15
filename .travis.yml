@@ -15,8 +15,7 @@ before_install:
     - docker pull treasureboat/ssh
     - docker run -p 2222:22 -d treasureboat/ssh 
     - docker inspect treasureboat/ssh 
-    - env
-    - ifconfig eth0 | grep "inet addr" | cut -d":" -f2 | awk '{print $1}'
+    - docker ps
 install: 
     - pip install -r requirements.txt
     - python setup.py install

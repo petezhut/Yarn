@@ -1,0 +1,2 @@
+paramiko>=1.13
+nose>=1.3

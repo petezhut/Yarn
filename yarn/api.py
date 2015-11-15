@@ -37,10 +37,6 @@ logger.addFilter(ConnectionStringFilter())
 def handle_output(stdout, stderr):
     stdout = [a.decode('utf-8').strip() for a in stdout.read().splitlines() if a]
     stderr = [a.decode('utf-8').strip() for a in stderr.read().splitlines() if a]
-    print(stdout)
-    print(stderr)
-    print(bool(stdout))
-    print(bool(stderr))
     if not stderr:
         for a in stdout:
             logging.info(a)

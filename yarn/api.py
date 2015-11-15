@@ -10,7 +10,7 @@ else:
     from yarn.environment import Environment
 from getpass import getpass
 from contextlib import contextmanager
-from paramiko.ssh_exception import AuthenticationException
+from paramiko.ssh_exception import AuthenticationException, SSHException
 
 
 logger = logging.getLogger("Yarn")

@@ -57,7 +57,7 @@ def local(command):
     proc = subprocess.Popen(command, shell=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
-    handle_output(stdout, stderr)
+    return handle_output(stdout, stderr)
 
 # Starting the work for sudo per GitHub Issue #20
 def sudo(command):

@@ -11,6 +11,8 @@ python:
 before_install:
     - docker pull treasureboat/ssh
     - docker run -p 2222:22 -d treasureboat/ssh 
+    - docker inspect treasureboat/ssh 
+    - /sbin/ifconfig -a
 install: 
     - pip install -r requirements.txt
     - python setup.py install

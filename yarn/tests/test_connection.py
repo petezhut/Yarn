@@ -5,7 +5,7 @@ import getpass
 import unittest
 from yarn.api import env, run, local
 
-env.host_string = local('ifconfig eth0 | grep "inet addr" | cut -d":" -f2 | awk \'{print $1}\'')[0]
+env.host_string = local('ifconfig eth0 | grep "inet addr" | cut -d":" -f2 | awk \'{print $1}\'')
 env.password = "123456"
 
 class TestConnection(unittest.TestCase):

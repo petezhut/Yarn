@@ -3,9 +3,9 @@
 import os
 import getpass
 import unittest
-from yarn.api import env, run
+from yarn.api import env, run, local
 
-env.host_string = os.environ["IP_ADDR"]
+env.host_string = local('ifconfig eth0 | grep "inet addr" | cut -d":" -f2 | awk \'{print $1}\'')
 env.host_port = 2222
 env.password = "123456"
 

@@ -16,6 +16,7 @@ before_install:
     - docker run -p 2222:22 -d treasureboat/ssh 
     - docker inspect treasureboat/ssh 
     - docker ps
+    - env
 install: 
     - pip install -r requirements.txt
     - python setup.py install

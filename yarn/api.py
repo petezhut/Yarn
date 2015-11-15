@@ -93,7 +93,7 @@ def ssh_connection(wrapped_function):
             ssh.connect(env.host_string, env.host_port, username=env.user,
                         pkey=env._paramiko_key)
             return wrapped_function(*args, conn=ssh, **kwargs)
-        except AuthenticationException:
+        except (SSHException, AuthenticationException):
             # If there is a problem with the pervious attempt (no/bad password)
             # Here is where we will query for it and try again.
             if not env.password:

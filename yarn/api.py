@@ -35,8 +35,13 @@ logging.basicConfig(format='[%(connection_string)s] %(levelname)s: %(message)s')
 logger.addFilter(ConnectionStringFilter())
 
 def handle_output(stdout, stderr):
-    stdout = [a.decode('utf-8').strip() for a in stdout.read().splitlines() if a]
-    stderr = [a.decode('utf-8').strip() for a in stderr.read().splitlines() if a]
+    try:
+        stdout = [a.decode('utf-8').strip() for a in stdout.read().splitlines() if a]
+        stderr = [a.decode('utf-8').strip() for a in stderr.read().splitlines() if a]
+    except AttributeError:
+        stdout = [a.decode('utf-8').strip() for a in stdout.splitlines() if a]
+        stderr = [a.decode('utf-8').strip() for a in stderr.splitlines() if a]
+
     if not stderr:
         for a in stdout:
             logging.info(a)

@@ -91,7 +91,8 @@ def ssh_connection(wrapped_function):
         except AuthenticationException:
             # If there is a problem with the pervious attempt (no/bad password)
             # Here is where we will query for it and try again.
-            env.password = getpass("Password for {}: ".format(env.connection_string))
+            if not env.password:
+                env.password = getpass("Password for {}: ".format(env.connection_string))
             ssh.connect(env.host_string, env.host_port, username=env.user,
                         password=env.password)
             return wrapped_function(*args, conn=ssh, **kwargs)

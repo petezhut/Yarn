@@ -76,7 +76,7 @@ def main():
                 # This is to handle the ability to have hostname:port on the command line
                 host_string, port = env.host_string.split(":")
                 env.host_string = host_string
-                env.port = int(port)
+                env.host_port = int(port)
             for command in args.commands:
                 execute_task(tasks, command)
     else:

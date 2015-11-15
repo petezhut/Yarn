@@ -1,4 +1,6 @@
+sudo: required
 language: python
+services: docker
 python: 
     - "2.7"
     - "3.2"
@@ -6,6 +8,9 @@ python:
     - "3.4"
     - "3.5"
     - "nightly"
+before_install:
+    - docker pull treasureboat/ssh
+    - docker docker run -p 2222:22 -d --name treasureboat/ssh 
 install: 
     - pip install -r requirements.txt
     - python setup.py install
